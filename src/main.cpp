@@ -11,16 +11,16 @@
 
 
 const char *predefinedEntries[] = {
-  "S8 faellt aus. Grund: Zu kalt.",
-  "RB75 heute 2900 Minuten spaeter",
+  "Streik!",
   "Streik - Aus die Maus!",
-  "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
   "Helau!",
   "Bischum, helau!",
   "Mehr Mett!",
   "Ohne Mett kein Streik!",
   "35 Stunden bei gleichem Mett!",
-  "Fahrt mehr Bus!"
+  "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
+  "S8 faellt aus. Grund: Zu kalt.",
+  "RB75 heute 2900 Minuten spaeter",
 };
 
 #define NUM_ENTRIES (sizeof(predefinedEntries) / sizeof(predefinedEntries[0]))
