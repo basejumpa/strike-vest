@@ -58,7 +58,13 @@ FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(
     + NEO_TILE_ROWS
   );
 
-static std::vector<std::string> userInputList;   ///< Vector to store user input
+
+/// Public intterface /////////////////////////////////////////////////////////
+void scrollText_setup(void);
+void scrollText_loop(void);
+std::vector<std::string> scrolltext_userInputList;   ///< Vector to store user input
+///////////////////////////////////////////////////////////////////////////////
+
 const char *scrollText_text = "";
 int16_t scrollText_x = mw;
 
@@ -66,8 +72,7 @@ unsigned long scrollText_lastUpdateTime = 0;
 const unsigned long scrollText_updateInterval = 50;
 int scrollText_times_to_show = 0;
 void scrollText_set(const char *text, int times);
-void scrollText_setup(void);
-void scrollText_loop(void);
+
 
 void scrollText_set(const char *text, int times) {
   scrollText_text = text;
@@ -79,10 +84,10 @@ bool scrollText_finished() {
 }
 
 void scrollText_update() {
-  if (userInputList.size() > 1)
-    userInputList.erase(userInputList.begin());
+  if (scrolltext_userInputList.size() > 1)
+    scrolltext_userInputList.erase(scrolltext_userInputList.begin());
 
-  const char *text = userInputList.front().c_str();
+  const char *text = scrolltext_userInputList.front().c_str();
   scrollText_set(text, 1);
 }
 

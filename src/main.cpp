@@ -131,7 +131,7 @@ void setup(void)
   addRoutesForCaptivePortal();
 
   /// Root webpage
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+  webServer.on("/deactivated", HTTP_GET, [](AsyncWebServerRequest *request) {
     String html = "";
     html += "<html><head>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
@@ -139,6 +139,37 @@ void setup(void)
     html += "Welcome on the StrikeVest";
     html += "</body></html>";
     request->send(200, "text/html", html);
+  });
+
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    String html = "<html><body>";
+    html += "<h1>Hello</h1>";
+    // Display the current list of user inputs
+    html += "<ul>";
+    for (const std::string& input : scrolltext_userInputList) {
+      html += "<li>" + input + "</li>";
+    }
+    html += "</ul>";
+    // Form to get user input
+    html += "<form action='/send' method='post'>";
+    html += "<input type='text' name='userInput' placeholder='Enter text'>";
+    html += "<input type='submit' value='Send'>";
+    // Button to manually reload the page
+    html += "<input type='button' value='Reload' onclick='location.reload();'>";
+    html += "</form></body></html>";
+    request->send(200, "text/html", html);
+  });
+
+  // Define the route to handle form submission
+  webServer.on("/send", HTTP_POST, [](AsyncWebServerRequest *request){
+    // Get the user input from the form
+    if(request->hasParam("userInput", true)){
+      const char* input_str = request->getParam("userInput", true)->value().c_str();
+      // Append the user input to the list
+      scrolltext_userInputList.push_back(std::string(input_str));
+    }
+    // Redirect back to the root after submission
+    request->redirect("/");
   });
 
 
