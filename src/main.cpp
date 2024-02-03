@@ -15,6 +15,8 @@
 #include <DNSServer.h>
 #include <ESPAsyncWebSrv.h>
 
+#include <Adafruit_GFX.h>
+
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Configuration
