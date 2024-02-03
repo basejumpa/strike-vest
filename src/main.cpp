@@ -12,6 +12,7 @@
 #include <vector>
 
 #include <WiFi.h>
+#include <DNSServer.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,11 +30,13 @@ const struct cfg_s {
 /// Implementation
 ///////////////////////////////////////////////////////////////////////////////
 
+DNSServer dnsServer;
+
 std::vector<std::string> userInputList;  ///< Vector to store user input
 
 void setup()
 {
-  /// Set up a visible access point w/o password
+  /// Set up a visible hotspot w/o password
   WiFi.mode(WIFI_MODE_AP);
   WiFi.softAP(cfg.ssid);
 }
