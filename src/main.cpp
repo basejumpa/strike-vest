@@ -6,29 +6,37 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Dependencies (external)
+/// Dependencies to standard C++ libaries
 ///////////////////////////////////////////////////////////////////////////////
 #include <string>
 #include <vector>
 
+///////////////////////////////////////////////////////////////////////////////
+/// Dependencies (external) (outside from project)
+///////////////////////////////////////////////////////////////////////////////
+#include <Arduino.h>
 #include <WiFi.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebSrv.h>
 
-#include <Adafruit_GFX.h>
-#include <FastLED.h>
-#include <FastLED_NeoMatrix.h>
+///////////////////////////////////////////////////////////////////////////////
+/// Dependencies (inside the same project)
+///////////////////////////////////////////////////////////////////////////////
+
+#include "scrolltext.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Configuration (public)
 ///////////////////////////////////////////////////////////////////////////////
 
 struct cfg_strike_vest_t {
-    String ssid;
+    String ssid;                        ///< WiFi SSID
+    unsigned long updateInterval;       ///< Display interval in milliseconds
 };
 
 const cfg_strike_vest_t cfg = {
-    "StrikeVest"    ///< ssid
+    "StrikeVest",    ///< ssid
+    2500             ///< // Update interval in milliseconds
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -62,8 +70,7 @@ void loop(void);
 */
 static DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
 static AsyncWebServer webServer(CFG_PRV_WEB_SERVER_PORT); ///< Create Web Server
-
-static std::vector<std::string> userInputList;  ///< Vector to store user input
+static unsigned long states_lastUpdateTime = 0;         ///< state variable
 
 /**
  * Create the routes for creating a captive portal.
@@ -137,6 +144,8 @@ void setup(void)
   createRoutesForCaptivePortal();
 
   webServer.begin(); ///< Start webserver
+
+  scrollText_setup();
 } // setup
 
 
@@ -146,7 +155,15 @@ void setup(void)
  * Being called continuously in an endless loop
 */
 void loop(void) {
+  if (millis() - states_lastUpdateTime >= cfg.updateInterval) {
+    // Remove the oldest entry from the list
+    // Update the last update time
+    states_lastUpdateTime = millis();
+  }
+
    dnsServer.processNextRequest(); ///< To be called about every 10ms
+
+   //scrollText_loop();
 } // loop
 
 ///////////////////////////////////////////////////////////////////////////////
