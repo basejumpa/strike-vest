@@ -21,7 +21,7 @@
 
 
 ///////////////////////////////////////////////////////////////////////////////
-/// Configuration
+/// Configuration (public)
 ///////////////////////////////////////////////////////////////////////////////
 
 struct cfg_strike_vest_t {
@@ -36,20 +36,37 @@ const cfg_strike_vest_t cfg = {
 /// Implementation
 ///////////////////////////////////////////////////////////////////////////////
 
+/**
+ * Configuration depending on public configuration
+*/
+
+/**
+ * Configuration (private)
+*/
+#define CFG_PRV_WIFI_MODE         WIFI_MODE_AP
+#define CFG_PRV_OWN_IP            4,3,2,1
+#define CFG_PRV_WEB_SERVER_PORT   80
+#define CFG_PRV_DNS_TTL           3600
+#define CFG_PRV_DNS_PORT          53
+#define CFG_PRV_DNS_DOMAIN_NAME   "*"
+
+/**
+ * Objects
+*/
 DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
-AsyncWebServer webServer(80); ///< Create Web Server listening at port 80
+AsyncWebServer webServer(CFG_PRV_WEB_SERVER_PORT); ///< Create Web Server
 
 std::vector<std::string> userInputList;  ///< Vector to store user input
 
 void setup()
 {
   /// Set up a visible hotspot w/o password
-  WiFi.mode(WIFI_MODE_AP);
+  WiFi.mode(CFG_PRV_WIFI_MODE);
   WiFi.softAP(cfg.ssid);
 
   /// Set up the DNS server
-  dnsServer.setTTL(3600);
-  dnsServer.start(53, "*", IPAddress(4,3,2,1));
+  dnsServer.setTTL(CFG_PRV_DNS_TTL);
+  dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
 }
 
 
