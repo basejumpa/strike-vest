@@ -81,7 +81,11 @@ void setup(void)
   /// Root webpage
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     String html = "";
+    html += "<html><head>";
+    html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
+    html += "</head><body>";
     html += "Welcome on the StrikeVest";
+    html += "</body></html>";
     request->send(200, "text/html", html);
   });
 
