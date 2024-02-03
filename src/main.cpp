@@ -19,29 +19,12 @@
 /// Configuration
 ///////////////////////////////////////////////////////////////////////////////
 
-struct cfg_wifi_t {
+struct cfg_strike_vest_t {
     String ssid;
 };
 
-struct cfg_dns_t {
-    uint32_t ttl;
-    uint16_t port;
-    String domain_name;
-};
-
-struct cfg_strike_vest_t {
-    cfg_wifi_t wifi;
-    cfg_dns_t dns;
-};
-
 const cfg_strike_vest_t cfg = {
-    {
-        "StrikeVest" ///< ssid
-    },
-    {
-        3600, ///< TTL
-        53, ///< port,
-    }
+    "StrikeVest"    ///< ssid
 };
 
 
@@ -58,11 +41,11 @@ void setup()
 {
   /// Set up a visible hotspot w/o password
   WiFi.mode(WIFI_MODE_AP);
-  WiFi.softAP(cfg.wifi.ssid);
+  WiFi.softAP(cfg.ssid);
 
   /// Set up the DNS server
-  dnsServer.setTTL(cfg.dns.ttl);
-  dnsServer.start(cfg.dns.port, "*", IPAddress(4,3,2,1));
+  dnsServer.setTTL(3600);
+  dnsServer.start(53, "*", IPAddress(4,3,2,1));
 }
 
 void loop()
