@@ -51,11 +51,12 @@ FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(
     + NEO_MATRIX_LEFT
     + NEO_MATRIX_COLUMNS
     + NEO_MATRIX_ZIGZAG
-
+#if 0
     // layout of the tiles
     + NEO_TILE_TOP
     + NEO_TILE_LEFT
     + NEO_TILE_ROWS
+#endif
   );
 
 
@@ -118,6 +119,7 @@ void scrollText_loop() {
     // matrix->setTextColor(matrix->Color(255, 0, 0));      // red
     matrix->setTextColor(matrix->Color(255, 255, 255));  // white
 
+    scrollText_text = "Streik - aus die Maus!";
     // Calculate text width to scroll the entire text
     uint16_t textWidth, textHeight;
     int16_t x1, y1;
@@ -128,12 +130,23 @@ void scrollText_loop() {
       scrollText_x = mw;
       scrollText_times_to_show -= (scrollText_times_to_show > 0 ? 1 : 0);
     }
+
     matrix->fillScreen(matrix->Color(0, 0, 0));  // Clear the matrix
-    matrix->setCursor(scrollText_x, 0);          // Set text starting position
+    //matrix->setCursor(scrollText_x, 0);          // Set text starting position
+    matrix->setCursor(0, 0);                     // Set text starting position
     matrix->print(scrollText_text);              // Print the text at the current position
     matrix->show();                              // Show the updated matrix
 
     scrollText_x--;
+
+#if 1
+  matrix->clear();
+  matrix->drawPixel(0,       0, CRGB( 255, 0,   0));    // red    links oben
+  matrix->drawPixel(mw-1,    0, CRGB( 0,   0,   255));  // blue   rechts oben
+  matrix->drawPixel(0,    mh-1, CRGB( 0,   255, 0));    // green  links unten
+  matrix->drawPixel(mw-1, mh-1, CRGB( 255, 255, 0));    // yellow rechts unten
+  matrix->show();
+#endif // CFG_TEST
 
     scrollText_lastUpdateTime = millis();
   }

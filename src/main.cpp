@@ -1,201 +1,284 @@
-//////////////////////////////////////////////////////////////////////////////
-/// Strike Vest
-///
-/// Strike Vest © 2024 by Alexander Mann-Wahrenberg (basejumpa)
-/// is licensed under [CC BY-SA 4.0].
-///////////////////////////////////////////////////////////////////////////////
-
-///////////////////////////////////////////////////////////////////////////////
-/// Dependencies to standard C++ libaries
-///////////////////////////////////////////////////////////////////////////////
-#include <string>
-#include <vector>
-
-///////////////////////////////////////////////////////////////////////////////
-/// Dependencies (external) (outside from project)
-///////////////////////////////////////////////////////////////////////////////
-#include <Arduino.h>
 #include <WiFi.h>
 #include <DNSServer.h>
 #include <ESPAsyncWebSrv.h>
+#include <vector>
 
-///////////////////////////////////////////////////////////////////////////////
-/// Dependencies (inside the same project)
-///////////////////////////////////////////////////////////////////////////////
+#include <Adafruit_GFX.h>
+#include <FastLED.h>
+#include <FastLED_NeoMatrix.h>
 
-#include "scrolltext.h"
+#define PIN 16
 
-///////////////////////////////////////////////////////////////////////////////
-/// Configuration (public)
-///////////////////////////////////////////////////////////////////////////////
 
-struct cfg_strike_vest_t {
-    String ssid;                        ///< WiFi SSID
-    String passphrase;                  ///< WiFi passphrase
-    unsigned long updateInterval;       ///< Display interval in milliseconds
+const char *predefinedEntries[] = {
+  "S8 faellt aus. Grund: Zu kalt.",
+  "RB75 heute 2900 Minuten spaeter",
+  "Streik - Aus die Maus!",
+  "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
+  "Helau!",
+  "Bischum, helau!",
+  "Mehr Mett!",
+  "Ohne Mett kein Streik!",
+  "35 Stunden bei gleichem Mett!",
+  "Fahrt mehr Bus!"
 };
 
-const cfg_strike_vest_t cfg = {
-    "StrikeVest",    ///< ssid
-    "helau",         ///< WiFi password
-    2500             ///< // Update interval in milliseconds
-};
+#define NUM_ENTRIES (sizeof(predefinedEntries) / sizeof(predefinedEntries[0]))
 
-///////////////////////////////////////////////////////////////////////////////
-/// Interface (public)
-///////////////////////////////////////////////////////////////////////////////
-void setup(void);
-void loop(void);
+#define tile_w (32)
+#define tile_h  (8)
 
-///////////////////////////////////////////////////////////////////////////////
-/// Implementation
-///////////////////////////////////////////////////////////////////////////////
+#define tiles_num_x (1)
+#define tiles_num_y (1)
 
-/**
- * Configuration depending on public configuration
-*/
+#define mw (tile_w * tiles_num_x)
+#define mh (tile_h * tiles_num_y)
+#define NUMMATRIX (mw * mh)
 
-/**
- * Configuration (private)
-*/
-#define CFG_PRV_WIFI_MODE         WIFI_MODE_AP
-#define CFG_PRV_OWN_IP            4,3,2,1
-#define CFG_PRV_SUBNET_MASK       255, 255, 255, 0
-#define CFG_PRV_OWN_URL           "http://4.3.2.1"
-#define CFG_PRV_WEB_SERVER_PORT   80
-#define CFG_PRV_DNS_TTL           3600
-#define CFG_PRV_DNS_PORT          53
-#define CFG_PRV_DNS_DOMAIN_NAME   "*"
+void scrollText(const char *text, int delayTime);
+void sendTwitterRequest();
 
-/**
- * Private objects
-*/
-static DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
-static AsyncWebServer webServer(CFG_PRV_WEB_SERVER_PORT); ///< Create Web Server
-static unsigned long states_lastUpdateTime = 0;         ///< state variable
+CRGB matrixleds[NUMMATRIX];
 
-/**
- * Create the routes for creating a captive portal.
-*/
-static void addRoutesForCaptivePortal(){
-  webServer.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
+FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(
+  matrixleds,   // reference to 1-dim array of type CRGB, each element is a LED.
+  mw,           // matrix width
+  mh,           // matrix height,
+  tiles_num_x,  // number of tiles in x direction
+  tiles_num_y,  // number of tiles in y direction
+  0
+    // layout of a single tile
+    + NEO_MATRIX_TOP
+    + NEO_MATRIX_LEFT
+    + NEO_MATRIX_COLUMNS
+    + NEO_MATRIX_ZIGZAG
+
+    // layout of the tiles
+    + NEO_TILE_TOP
+    + NEO_TILE_LEFT
+    + NEO_TILE_ROWS
+  );
+
+const char *ssid = "InfoTafel-";
+const char *password = NULL;  // no password
+
+#define MAX_CLIENTS 4   // ESP32 supports up to 10 but I have not tested it yet
+#define WIFI_CHANNEL 6  // 2.4ghz channel 6 https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
+
+#define DNS_INTERVAL 30
+
+const IPAddress localIP(4, 3, 2, 1);           // the IP address the web server, Samsung requires the IP to be in public space
+const IPAddress gatewayIP(4, 3, 2, 1);         // IP address of the network should be the same as the local IP for captive portals
+const IPAddress subnetMask(255, 255, 255, 0);  // no need to change: https://avinetworks.com/glossary/subnet-mask/
+
+const String localIPURL = "http://4.3.2.1";  // a string version of the local IP with http, used for redirecting clients to your webpage
+
+DNSServer dnsServer;
+AsyncWebServer server(80);
+
+std::vector<String> userInputList;  // Vector to store user input
+unsigned long lastUpdateTime = 0;
+const unsigned long updateInterval = 2500;  // Update every 1000 milliseconds (1 second)
+
+
+
+
+String scrollText_text = "";
+int16_t scrollText_x = mw;
+unsigned long scrollText_lastUpdateTime = 0;
+const unsigned long scrollText_updateInterval = 50;
+int scrollText_times_to_show = 0;
+void scrollText_set(String text, int times);
+void scrollText_loop();
+
+void scrollText_set(String text, int times) {
+  scrollText_text = text;
+  scrollText_times_to_show = times;
+}
+
+bool scrollText_finished() {
+  return (scrollText_times_to_show == 0);
+}
+
+void scrollText_update() {
+  if (userInputList.size() > 1)
+    userInputList.erase(userInputList.begin());
+
+  scrollText_set(userInputList.front(), 1);
+}
+
+void scrollText_loop() {
+  if (millis() - scrollText_lastUpdateTime >= scrollText_updateInterval) {
+
+    if (scrollText_finished()) {
+      scrollText_update();
+    }
+
+    // matrix->setTextColor(matrix->Color(255, 0, 0));      // red
+    matrix->setTextColor(matrix->Color(255, 255, 255));  // white
+
+    // Calculate text width to scroll the entire text
+    uint16_t textWidth, textHeight;
+    int16_t x1, y1;
+    matrix->getTextBounds(scrollText_text, 0, 0, &x1, &y1, &textWidth, &textHeight);
+
+    if (scrollText_x >= -textWidth) {
+    } else {
+      scrollText_x = mw;
+      scrollText_times_to_show -= (scrollText_times_to_show > 0 ? 1 : 0);
+    }
+    matrix->fillScreen(matrix->Color(0, 0, 0));  // Clear the matrix
+    matrix->setCursor(scrollText_x, 0);          // Set text starting position
+    matrix->print(scrollText_text);              // Print the text at the current position
+    matrix->show();                              // Show the updated matrix
+
+    scrollText_x--;
+
+    scrollText_lastUpdateTime = millis();
+  }
+}
+
+
+void setup(void) {
+  Serial.begin(115200);
+
+  FastLED.addLeds<NEOPIXEL, PIN>(matrixleds, NUMMATRIX);
+  matrix->begin();
+  matrix->setTextWrap(false);
+  matrix->setBrightness(40);
+
+  // Set the WiFi mode to access point and station
+  WiFi.mode(WIFI_MODE_AP);
+
+  // Define the subnet mask for the WiFi network
+  const IPAddress subnetMask(255, 255, 255, 0);
+
+  // Configure the soft access point with a specific IP and subnet mask
+  WiFi.softAPConfig(localIP, gatewayIP, subnetMask);
+
+  // Start the soft access point with the given ssid, password, channel, max number of clients
+  // Get the MAC address
+  String macAddress = WiFi.macAddress();
+  Serial.println("Full MAC Address: " + macAddress);
+
+  // Get the last two characters
+  String lastTwoCharacters = macAddress.substring(macAddress.length() - 2);
+
+  WiFi.softAP(ssid + lastTwoCharacters, password, WIFI_CHANNEL, 0, MAX_CLIENTS);
+
+  Serial.println("Access Point Started");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.softAPIP());
+
+  dnsServer.setTTL(3600);
+  dnsServer.start(53, "*", localIP);
+
+  // Required
+  server.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
     request->redirect("http://logout.net");
   });  // windows 11 captive portal workaround
-  webServer.on("/wpad.dat", [](AsyncWebServerRequest *request) {
+  server.on("/wpad.dat", [](AsyncWebServerRequest *request) {
     request->send(404);
   });  // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
 
   // Background responses: Probably not all are Required, but some are. Others might speed things up?
   // A Tier (commonly used by modern systems)
-  webServer.on("/generate_204", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
+  server.on("/generate_204", [](AsyncWebServerRequest *request) {
+    request->redirect(localIPURL);
   });  // android captive portal redirect
-  webServer.on("/redirect", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
+  server.on("/redirect", [](AsyncWebServerRequest *request) {
+    request->redirect(localIPURL);
   });  // microsoft redirect
-  webServer.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
+  server.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
+    request->redirect(localIPURL);
   });  // apple call home
-  webServer.on("/canonical.html", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
+  server.on("/canonical.html", [](AsyncWebServerRequest *request) {
+    request->redirect(localIPURL);
   });  // firefox captive portal call home
-  webServer.on("/success.txt", [](AsyncWebServerRequest *request) {
+  server.on("/success.txt", [](AsyncWebServerRequest *request) {
     request->send(200);
   });  // firefox captive portal call home
-  webServer.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
+  server.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
+    request->redirect(localIPURL);
   });  // windows call home
-  webServer.on("/favicon.ico", [](AsyncWebServerRequest *request) {
+
+  // B Tier (uncommon)
+  //  server.on("/chrome-variations/seed",[](AsyncWebServerRequest *request){request->send(200);}); //chrome captive portal call home
+  //  server.on("/service/update2/json",[](AsyncWebServerRequest *request){request->send(200);}); //firefox?
+  //  server.on("/chat",[](AsyncWebServerRequest *request){request->send(404);}); //No stop asking Whatsapp, there is no internet connection
+  //  server.on("/startpage",[](AsyncWebServerRequest *request){request->redirect(localIPURL);});
+
+  // return 404 to webpage icon
+  server.on("/favicon.ico", [](AsyncWebServerRequest *request) {
     request->send(404);
   });  // webpage icon
-} // addRoutesForCaptivePortal
 
+  userInputList.push_back(predefinedEntries[0]);
 
-/**
- * Entry point setup
- *
- * Called one time after system init before first call of loop()
-*/
-void setup(void)
-{
-  /// Set up a visible hotspot w/o password
-  WiFi.mode(CFG_PRV_WIFI_MODE);
-  /// Configure the soft access point with a specific IP and subnet mask. Gateway is the ESP32 itself
-  WiFi.softAPConfig(IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_SUBNET_MASK));
-  WiFi.softAP(cfg.ssid, cfg.passphrase);
-
-  /// Set up the DNS server
-  dnsServer.setTTL(CFG_PRV_DNS_TTL);
-  dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
-
-  addRoutesForCaptivePortal();
-
-  /// Root webpage
-  webServer.on("/deactivated", HTTP_GET, [](AsyncWebServerRequest *request) {
+  // Define the captive portal route
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
     String html = "";
     html += "<html><head>";
     html += "<meta name='viewport' content='width=device-width, initial-scale=1.0'>";
     html += "</head><body>";
-    html += "Welcome on the StrikeVest";
+
+    // Form with buttons to append predefined entries
+    html += "<form action='/send' method='post'>";
+    for (int i = 0; i < NUM_ENTRIES; ++i) {
+      html += "<button name=\"button\" value=\"" + String(i) + "\" type=\"submit\">" + String(predefinedEntries[i]) + "</button><br>";
+    }
+    html += "</form>";
+
+    // Display the current list of user inputs
+    html += "<ul>";
+    for (const String &input : userInputList) {
+      html += "<li>" + input + "</li>";
+    }
+    html += "</ul>";
+
+    // JavaScript to reload the page every 2 seconds
+    html += "<script>setTimeout(function(){ location.reload(); }, 2000);</script>";
     html += "</body></html>";
     request->send(200, "text/html", html);
   });
 
-  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-    String html = "<html><body>";
-    html += "<h1>Hello</h1>";
-    // Display the current list of user inputs
-    html += "<ul>";
-    for (const std::string& input : scrolltext_userInputList) {
-      html += "<li>" + input + "</li>";
-    }
-    html += "</ul>";
-    // Form to get user input
-    html += "<form action='/send' method='post'>";
-    html += "<input type='text' name='userInput' placeholder='Enter text'>";
-    html += "<input type='submit' value='Send'>";
-    // Button to manually reload the page
-    html += "<input type='button' value='Reload' onclick='location.reload();'>";
-    html += "</form></body></html>";
-    request->send(200, "text/html", html);
-  });
-
   // Define the route to handle form submission
-  webServer.on("/send", HTTP_POST, [](AsyncWebServerRequest *request){
-    // Get the user input from the form
-    if(request->hasParam("userInput", true)){
-      const char* input_str = request->getParam("userInput", true)->value().c_str();
-      // Append the user input to the list
-      scrolltext_userInputList.push_back(std::string(input_str));
+  server.on("/send", HTTP_POST, [](AsyncWebServerRequest *request) {
+    // Check which button was pressed
+    if (request->hasParam("button", true)) {
+      // Append the corresponding predefined entry to the list
+      int i = request->getParam("button", true)->value().toInt();
+      userInputList.push_back(predefinedEntries[i]);
     }
     // Redirect back to the root after submission
     request->redirect("/");
   });
 
+  // Start server
+  server.begin();
 
-  webServer.begin(); ///< Start webserver
+#if 0
+  matrix->clear();
+  matrix->drawPixel(0,       0, CRGB( 255, 0,   0));    // red    links oben
+  matrix->drawPixel(mw-1,    0, CRGB( 0,   0,   255));  // blue   rechts oben
+  matrix->drawPixel(0,    mh-1, CRGB( 0,   255, 0));    // green  links unten
+  matrix->drawPixel(mw-1, mh-1, CRGB( 255, 255, 0));    // yellow rechts unten
+  matrix->show();
+#endif // 0
+}
 
-  scrollText_setup();
-} // setup
 
 
-/**
- * Entry point loop
- *
- * Being called continuously in an endless loop
-*/
-void loop(void) {
-  if (millis() - states_lastUpdateTime >= cfg.updateInterval) {
+void loop() {
+  // Check if it's time to update the list
+  if (millis() - lastUpdateTime >= updateInterval) {
     // Remove the oldest entry from the list
     // Update the last update time
-    states_lastUpdateTime = millis();
+    lastUpdateTime = millis();
   }
 
-   dnsServer.processNextRequest(); ///< To be called about every 10ms
+  dnsServer.processNextRequest();  // I call this atleast every 10ms in my other projects (can be higher but I haven't tested it for stability)
+  delay(DNS_INTERVAL);             // seems to help with stability, if you are doing other things in the loop this may not be needed
 
-   //scrollText_loop();
-} // loop
-
-///////////////////////////////////////////////////////////////////////////////
-/// EOF
-///////////////////////////////////////////////////////////////////////////////
+  scrollText_loop();
+}
