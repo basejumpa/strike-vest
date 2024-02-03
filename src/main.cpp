@@ -59,7 +59,7 @@ FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(
     + NEO_TILE_ROWS
   );
 
-const char *ssid = "InfoTafel-";
+const char *ssid = "Streikender-";
 const char *password = NULL;  // no password
 
 #define MAX_CLIENTS 4   // ESP32 supports up to 10 but I have not tested it yet
@@ -162,7 +162,7 @@ void setup(void) {
   Serial.println("Full MAC Address: " + macAddress);
 
   // Get the last two characters
-  String lastTwoCharacters = macAddress.substring(macAddress.length() - 2);
+  String lastTwoCharacters = String("47");
 
   WiFi.softAP(ssid + lastTwoCharacters, password, WIFI_CHANNEL, 0, MAX_CLIENTS);
 
