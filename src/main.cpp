@@ -13,6 +13,7 @@
 
 #include <WiFi.h>
 #include <DNSServer.h>
+#include <ESPAsyncWebSrv.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,6 +35,7 @@ const cfg_strike_vest_t cfg = {
 ///////////////////////////////////////////////////////////////////////////////
 
 DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
+AsyncWebServer webServer(80); ///< Create Web Server listening at port 80
 
 std::vector<std::string> userInputList;  ///< Vector to store user input
 
