@@ -19,18 +19,38 @@
 /// Configuration
 ///////////////////////////////////////////////////////////////////////////////
 
-const struct cfg_s {
-     const String ssid;
-} cfg= {
-    "StrikeVest", ///< ssid
+struct cfg_wifi_t {
+    String ssid;
 };
+
+struct cfg_dns_t {
+    uint32_t ttl;
+    uint16_t port;
+    String domain_name;
+};
+
+struct cfg_strike_vest_t {
+    cfg_wifi_t wifi;
+    cfg_dns_t dns;
+};
+
+const cfg_strike_vest_t cfg = {
+    {
+        "StrikeVest" ///< ssid
+    },
+    {
+        3600, ///< TTL
+        53, ///< port,
+    }
+};
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Implementation
 ///////////////////////////////////////////////////////////////////////////////
 
-DNSServer dnsServer;
+DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
 
 std::vector<std::string> userInputList;  ///< Vector to store user input
 
@@ -38,7 +58,11 @@ void setup()
 {
   /// Set up a visible hotspot w/o password
   WiFi.mode(WIFI_MODE_AP);
-  WiFi.softAP(cfg.ssid);
+  WiFi.softAP(cfg.wifi.ssid);
+
+  /// Set up the DNS server
+  dnsServer.setTTL(cfg.dns.ttl);
+  dnsServer.start(cfg.dns.port, "*", IPAddress(4,3,2,1));
 }
 
 void loop()
