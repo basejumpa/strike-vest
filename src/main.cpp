@@ -16,6 +16,7 @@
 #include <ESPAsyncWebSrv.h>
 
 #include <Adafruit_GFX.h>
+#include <FastLED.h>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -29,8 +30,6 @@ struct cfg_strike_vest_t {
 const cfg_strike_vest_t cfg = {
     "StrikeVest"    ///< ssid
 };
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 /// Implementation
