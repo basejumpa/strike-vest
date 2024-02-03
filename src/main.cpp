@@ -50,6 +50,7 @@ void loop(void);
 */
 #define CFG_PRV_WIFI_MODE         WIFI_MODE_AP
 #define CFG_PRV_OWN_IP            4,3,2,1
+#define CFG_PRV_SUBNET_MASK       255, 255, 255, 0
 #define CFG_PRV_OWN_URL           "http://4.3.2.1"
 #define CFG_PRV_WEB_SERVER_PORT   80
 #define CFG_PRV_DNS_TTL           3600
@@ -67,38 +68,9 @@ static std::vector<std::string> userInputList;  ///< Vector to store user input
 /**
  * Create the routes for creating a captive portal.
 */
-static void createRoutesForCaptivePortal(AsyncWebServer srv){
+static void createRoutesForCaptivePortal(){
   // Required
-  srv.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
-    request->redirect("http://logout.net");
-  });  // windows 11 captive portal workaround
-  srv.on("/wpad.dat", [](AsyncWebServerRequest *request) {
-    request->send(404);
-  });  // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
 
-  // Background responses: Probably not all are Required, but some are. Others might speed things up?
-  // A Tier (commonly used by modern systems)
-  srv.on("/generate_204", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
-  });  // android captive portal redirect
-  srv.on("/redirect", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
-  });  // microsoft redirect
-  srv.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
-  });  // apple call home
-  srv.on("/canonical.html", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
-  });  // firefox captive portal call home
-  srv.on("/success.txt", [](AsyncWebServerRequest *request) {
-    request->send(200);
-  });  // firefox captive portal call home
-  srv.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
-    request->redirect(CFG_PRV_OWN_URL);
-  });  // windows call home
-  srv.on("/favicon.ico", [](AsyncWebServerRequest *request) {
-    request->send(404);
-  });  // webpage icon
 } // createCaptivePortal
 
 
@@ -111,11 +83,45 @@ void setup(void)
 {
   /// Set up a visible hotspot w/o password
   WiFi.mode(CFG_PRV_WIFI_MODE);
+  /// Configure the soft access point with a specific IP and subnet mask. Gateway is the ESP32 itself
+  WiFi.softAPConfig(IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_SUBNET_MASK));
   WiFi.softAP(cfg.ssid);
 
   /// Set up the DNS server
   dnsServer.setTTL(CFG_PRV_DNS_TTL);
   dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
+
+  /// Create captive portal
+  webServer.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
+    request->redirect("http://logout.net");
+  });  // windows 11 captive portal workaround
+  webServer.on("/wpad.dat", [](AsyncWebServerRequest *request) {
+    request->send(404);
+  });  // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
+
+  // Background responses: Probably not all are Required, but some are. Others might speed things up?
+  // A Tier (commonly used by modern systems)
+  webServer.on("/generate_204", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // android captive portal redirect
+  webServer.on("/redirect", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // microsoft redirect
+  webServer.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // apple call home
+  webServer.on("/canonical.html", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // firefox captive portal call home
+  webServer.on("/success.txt", [](AsyncWebServerRequest *request) {
+    request->send(200);
+  });  // firefox captive portal call home
+  webServer.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // windows call home
+  webServer.on("/favicon.ico", [](AsyncWebServerRequest *request) {
+    request->send(404);
+  });  // webpage icon
 
   /// Root webpage
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -128,7 +134,7 @@ void setup(void)
     request->send(200, "text/html", html);
   });
 
-  createRoutesForCaptivePortal(webServer);
+  createRoutesForCaptivePortal();
 
   webServer.begin(); ///< Start webserver
 } // setup
