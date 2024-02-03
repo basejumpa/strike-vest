@@ -77,6 +77,13 @@ void setup(void)
   /// Set up the DNS server
   dnsServer.setTTL(CFG_PRV_DNS_TTL);
   dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
+
+  /// Root webpage
+  webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    String html = "";
+    html += "Welcome on the StrikeVest";
+    request->send(200, "text/html", html);
+  });
 } // setup
 
 
