@@ -48,9 +48,10 @@ void setup()
   dnsServer.start(53, "*", IPAddress(4,3,2,1));
 }
 
-void loop()
-{
 
+
+void loop() {
+   dnsServer.processNextRequest(); ///< To be called about every 10ms
 }
 
 ///////////////////////////////////////////////////////////////////////////////
