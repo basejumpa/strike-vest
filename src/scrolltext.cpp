@@ -93,12 +93,14 @@ void scrollText_setup(void){
   matrix->setTextWrap(false);
   matrix->setBrightness(40);
 
+#ifdef CFG_TEST
   matrix->clear();
   matrix->drawPixel(0,       0, CRGB( 255, 0,   0));    // red    links oben
   matrix->drawPixel(mw-1,    0, CRGB( 0,   0,   255));  // blue   rechts oben
   matrix->drawPixel(0,    mh-1, CRGB( 0,   255, 0));    // green  links unten
   matrix->drawPixel(mw-1, mh-1, CRGB( 255, 255, 0));    // yellow rechts unten
   matrix->show();
+#endif // CFG_TEST
 } // scrollText_setup
 
 void scrollText_loop() {

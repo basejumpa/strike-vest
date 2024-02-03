@@ -31,11 +31,13 @@
 
 struct cfg_strike_vest_t {
     String ssid;                        ///< WiFi SSID
+    String passphrase;                  ///< WiFi passphrase
     unsigned long updateInterval;       ///< Display interval in milliseconds
 };
 
 const cfg_strike_vest_t cfg = {
     "StrikeVest",    ///< ssid
+    "helau",         ///< WiFi password
     2500             ///< // Update interval in milliseconds
 };
 
@@ -75,30 +77,7 @@ static unsigned long states_lastUpdateTime = 0;         ///< state variable
 /**
  * Create the routes for creating a captive portal.
 */
-static void createRoutesForCaptivePortal(){
-  // Required
-
-} // createCaptivePortal
-
-
-/**
- * Entry point setup
- *
- * Called one time after system init before first call of loop()
-*/
-void setup(void)
-{
-  /// Set up a visible hotspot w/o password
-  WiFi.mode(CFG_PRV_WIFI_MODE);
-  /// Configure the soft access point with a specific IP and subnet mask. Gateway is the ESP32 itself
-  WiFi.softAPConfig(IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_SUBNET_MASK));
-  WiFi.softAP(cfg.ssid);
-
-  /// Set up the DNS server
-  dnsServer.setTTL(CFG_PRV_DNS_TTL);
-  dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
-
-  /// Create captive portal
+static void addRoutesForCaptivePortal(){
   webServer.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
     request->redirect("http://logout.net");
   });  // windows 11 captive portal workaround
@@ -129,6 +108,27 @@ void setup(void)
   webServer.on("/favicon.ico", [](AsyncWebServerRequest *request) {
     request->send(404);
   });  // webpage icon
+} // addRoutesForCaptivePortal
+
+
+/**
+ * Entry point setup
+ *
+ * Called one time after system init before first call of loop()
+*/
+void setup(void)
+{
+  /// Set up a visible hotspot w/o password
+  WiFi.mode(CFG_PRV_WIFI_MODE);
+  /// Configure the soft access point with a specific IP and subnet mask. Gateway is the ESP32 itself
+  WiFi.softAPConfig(IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_OWN_IP), IPAddress(CFG_PRV_SUBNET_MASK));
+  WiFi.softAP(cfg.ssid, cfg.passphrase);
+
+  /// Set up the DNS server
+  dnsServer.setTTL(CFG_PRV_DNS_TTL);
+  dnsServer.start(CFG_PRV_DNS_PORT, CFG_PRV_DNS_DOMAIN_NAME, IPAddress(CFG_PRV_OWN_IP));
+
+  addRoutesForCaptivePortal();
 
   /// Root webpage
   webServer.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
@@ -141,7 +141,6 @@ void setup(void)
     request->send(200, "text/html", html);
   });
 
-  createRoutesForCaptivePortal();
 
   webServer.begin(); ///< Start webserver
 
