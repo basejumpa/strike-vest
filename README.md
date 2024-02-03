@@ -24,7 +24,8 @@ From the WiFi client a ping to the IP address of the StrikeVest gets replies.
 
     ping 192.168.4.1
 
-Browsing to http://192.168.4.1 does not work on the WiFi client.
+Browsing to http://192.168.4.1 works on the WiFi client:
+You see "Welcome on the StrikeVest" in the browser.
 
 
 ## Expected behavior

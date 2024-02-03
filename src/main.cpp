@@ -84,6 +84,8 @@ void setup(void)
     html += "Welcome on the StrikeVest";
     request->send(200, "text/html", html);
   });
+
+  webServer.begin(); ///< Start webserver
 } // setup
 
 
