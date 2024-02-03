@@ -50,18 +50,57 @@ void loop(void);
 */
 #define CFG_PRV_WIFI_MODE         WIFI_MODE_AP
 #define CFG_PRV_OWN_IP            4,3,2,1
+#define CFG_PRV_OWN_URL           "http://4.3.2.1"
 #define CFG_PRV_WEB_SERVER_PORT   80
 #define CFG_PRV_DNS_TTL           3600
 #define CFG_PRV_DNS_PORT          53
 #define CFG_PRV_DNS_DOMAIN_NAME   "*"
 
 /**
- * Objects
+ * Private objects
 */
 static DNSServer dnsServer; ///< Create a Domain Name System (DNS) Server
 static AsyncWebServer webServer(CFG_PRV_WEB_SERVER_PORT); ///< Create Web Server
 
 static std::vector<std::string> userInputList;  ///< Vector to store user input
+
+/**
+ * Create the routes for creating a captive portal.
+*/
+static void createRoutesForCaptivePortal(AsyncWebServer srv){
+  // Required
+  srv.on("/connecttest.txt", [](AsyncWebServerRequest *request) {
+    request->redirect("http://logout.net");
+  });  // windows 11 captive portal workaround
+  srv.on("/wpad.dat", [](AsyncWebServerRequest *request) {
+    request->send(404);
+  });  // Honestly don't understand what this is but a 404 stops win 10 keep calling this repeatedly and panicking the esp32 :)
+
+  // Background responses: Probably not all are Required, but some are. Others might speed things up?
+  // A Tier (commonly used by modern systems)
+  srv.on("/generate_204", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // android captive portal redirect
+  srv.on("/redirect", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // microsoft redirect
+  srv.on("/hotspot-detect.html", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // apple call home
+  srv.on("/canonical.html", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // firefox captive portal call home
+  srv.on("/success.txt", [](AsyncWebServerRequest *request) {
+    request->send(200);
+  });  // firefox captive portal call home
+  srv.on("/ncsi.txt", [](AsyncWebServerRequest *request) {
+    request->redirect(CFG_PRV_OWN_URL);
+  });  // windows call home
+  srv.on("/favicon.ico", [](AsyncWebServerRequest *request) {
+    request->send(404);
+  });  // webpage icon
+} // createCaptivePortal
+
 
 /**
  * Entry point setup
@@ -88,6 +127,8 @@ void setup(void)
     html += "</body></html>";
     request->send(200, "text/html", html);
   });
+
+  createRoutesForCaptivePortal(webServer);
 
   webServer.begin(); ///< Start webserver
 } // setup
