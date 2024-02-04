@@ -11,12 +11,16 @@
 
 
 const char *predefinedEntries[] = {
-  "Streik!",
-  "Streik - Aus die Maus!",
+  "WiFI **  Streikender-47 **  VERBINDE DICH **",
+  "Streik ** Streik ** Streik ++ ",
+  "Wo bleibt der Zug?",
+  "Immer zu spaet kommen ist doch zuverlaessig!",
+  "Wann kommt der Zug? ** Kann nicht mehr lange dauern, die Schienen liegen schon"
   "Helau!",
   "Bischum, helau!",
   "Mehr Mett!",
   "Ohne Mett kein Streik!",
+  "Fahrplan? -- Nein, Unverbindliche Abfahrtsempfehlung mit Gleisvorschlag --",
   "35 Stunden bei gleichem Mett!",
   "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
   "S8 faellt aus. Grund: Zu kalt.",
@@ -62,7 +66,7 @@ FastLED_NeoMatrix *matrix = new FastLED_NeoMatrix(
 const char *ssid = "Streikender-";
 const char *password = NULL;  // no password
 
-#define MAX_CLIENTS 4   // ESP32 supports up to 10 but I have not tested it yet
+#define MAX_CLIENTS 8   // ESP32 supports up to 10 but I have not tested it yet
 #define WIFI_CHANNEL 6  // 2.4ghz channel 6 https://en.wikipedia.org/wiki/List_of_WLAN_channels#2.4_GHz_(802.11b/g/n/ax)
 
 #define DNS_INTERVAL 30
