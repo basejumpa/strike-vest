@@ -10,7 +10,7 @@
 #define PIN 16
 
 
-const char *predefinedEntries[] = {
+const char *predefinedEntries__umzug_bischem_umzug_kostheim[] = {
   "WiFI **  Streikender-47 **  VERBINDE DICH **",
   "Streik ** Streik ** Streik ++ ",
   "Wo bleibt der Zug?",
@@ -25,6 +25,32 @@ const char *predefinedEntries[] = {
   "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
   "S8 faellt aus. Grund: Zu kalt.",
   "RB75 heute 2900 Minuten spaeter",
+};
+
+const char *predefinedEntries[] = {
+  "WiFI ++  Streikender-47 ++  VERBINDE DICH ++",
+  "Club-11-Party!! ++ Club-11-Party ++ Club-11-Party ++",
+  "Helau! ++ Helau! ++",
+  "Humba - Humba - Humba - Humba - ",
+  "Der Meenzer Fassenacht ein 3faches Helau - Helau - Helau"
+  "Die Schwarzen Husaren rocken ab ++ Schwarzen Husaren rocken ab ++",
+  "Jammin'Cool ++ Jammin'Cool ++",
+  "JUMP! ++ JUMP! ++ JUMP ++",
+  "Are you ready to party?!",
+  "Let's make some noise for Meenz!",
+  "Put your hands up in the air!",
+  "I wanna see you dance!",
+  "Are you feeling the beat?!",
+  "Who's ready to have the time of their lives?!",
+  "Shout out to all the party animals in the house!",
+  "Let's turn this place into a dancefloor!",
+  "Are you ready to feel the bass?!",
+  "Make some noise if you're having a good time!",
+  "++ __ ++ __ ++ __ ++ __",
+  "? ! ? !",
+  ":-)   :-)  :-)  :-)  :-)  ",
+  ":-()  :-()  :-()  :-()  :-()  ",
+  "=>  =>  =>  =>  =>  "
 };
 
 #define NUM_ENTRIES (sizeof(predefinedEntries) / sizeof(predefinedEntries[0]))
