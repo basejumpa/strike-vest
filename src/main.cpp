@@ -27,7 +27,7 @@ const char *predefinedEntries__umzug_bischem_umzug_kostheim[] = {
   "RB75 heute 2900 Minuten spaeter",
 };
 
-const char *predefinedEntries[] = {
+const char *predefinedEntries_jamn_cool[] = {
   "WiFI ++  Streikender-47 ++  VERBINDE DICH ++",
   "Club-11-Party!! ++ Club-11-Party ++ Club-11-Party ++",
   "Helau! ++ Helau! ++",
@@ -51,6 +51,48 @@ const char *predefinedEntries[] = {
   ":-)   :-)  :-)  :-)  :-)  ",
   ":-()  :-()  :-()  :-()  :-()  ",
   "=>  =>  =>  =>  =>  "
+};
+
+const char *predefinedEntries[] = {
+  "WiFI ++  Streikender-47 ++  VERBINDE DICH ++",
+  "Rosenmontag 2024 - Helau",
+  "Rucki zucki"
+  "Helau! ++ Helau! ++  Helau! ++ Helau! ++  Helau! ++ Helau! ++  Helau! ++ Helau! ++  Helau! ++ Helau! ++",
+  "Humba humba taeteraehhh"
+  "Streik ** Streik ** Streik ++ ",
+  "Wo bleibt der Zug?",
+  "Immer zu spaet kommen ist doch zuverlaessig!",
+  "Wann kommt der Zug? ** Kann nicht mehr lange dauern, die Schienen liegen schon"
+  "Helau!",
+  "Dem goldische Meenz ein 3faches Helau - Helau - Helau",
+  "Schoppe <- Schoppe <- Schoppe <-",
+  "Schoppe statt shoppe!",
+  "in die Lokale, in die Lokale"
+  "Weck <- Woscht <- Woi <-",
+  "Wir sind Mainzer, wir sind Mainzer, wir sind Ma, Main-zer.",
+  "Fahrplan? -- Nein, Unverbindliche Abfahrtsempfehlung mit Gleisvorschlag --",
+  "35 Stunden bei gleichem Mett!",
+  "HUMBAS Helau",
+  "Margit Helau",
+  "Hannsgeorg Helau",
+  "Hofsaenger Helau",
+  "Obermessdiener Helau",
+  "DobbelBock Helau",
+  "Handkäs und sei Mussig !!",
+  "MCV Helau",
+  "MCC Helau",
+  "GCV Helau",
+  "KCK Helau",
+  "Fassenacht in Meenz",
+  "ICE Frankfurt -> Mainz: Klo kaputt, bitte einhalten.",
+  "S8 faellt aus. Grund: Zu kalt.",
+  "RB75 heute 2900 Minuten spaeter",
+  "++ __ ++ __ ++ __ ++ __",
+  "Dem Präsi ein 3faches Helau - Helau - Helau -",
+  "Mit dem Zweiten sieht man besser!",
+  "Mit dem Zweiten sieht man besser!"
+  "<-  <-  <-  <-  <-  ",
+  ".. .. .. .. .."
 };
 
 #define NUM_ENTRIES (sizeof(predefinedEntries) / sizeof(predefinedEntries[0]))
